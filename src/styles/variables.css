@@ -1,0 +1,98 @@
+:root {
+  /* Brand Theme Colors - Inspired by rahma.store */
+  --color-primary: #1960c2;
+  --color-primary-hover: #134a96;
+  --color-primary-active: #0f3c7a;
+  --color-primary-light: rgba(25, 96, 194, 0.08);
+  --color-primary-subtle: rgba(25, 96, 194, 0.15);
+
+  --color-sub-primary: #521b25;
+  --color-sub-primary-light: rgba(82, 27, 37, 0.08);
+
+  /* Status Colors */
+  --color-success: #5aa788;
+  --color-success-hover: #4a8e73;
+  --color-success-light: rgba(90, 167, 136, 0.12);
+
+  --color-warning: #ffcf57;
+  --color-warning-hover: #e6b83f;
+  --color-warning-light: rgba(255, 207, 87, 0.15);
+  --color-warning-text: #946c00;
+
+  --color-danger: #ec5550;
+  --color-danger-hover: #d63f3a;
+  --color-danger-light: rgba(236, 85, 80, 0.12);
+
+  --color-info: #3b82f6;
+  --color-info-light: rgba(59, 130, 246, 0.12);
+
+  /* Neutrals & Surfaces */
+  --color-bg: #f5f6f8;
+  --color-bg-alt: #ebeef2;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f9fafb;
+  --color-card: #ffffff;
+
+  /* Typography Colors */
+  --color-text-primary: #010f1c;
+  --color-text-secondary: #4a5568;
+  --color-text-muted: #718096;
+  --color-text-inverse: #ffffff;
+
+  /* Borders & Dividers */
+  --color-border: #e2e8f0;
+  --color-border-subtle: #edf2f7;
+  --color-border-focus: #1960c2;
+
+  /* Typography */
+  --font-family: 'Baloo Bhaijaan 2', 'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-size-xs: 0.75rem;     /* 12px */
+  --font-size-sm: 0.875rem;    /* 14px */
+  --font-size-md: 1rem;        /* 16px */
+  --font-size-lg: 1.125rem;    /* 18px */
+  --font-size-xl: 1.25rem;     /* 20px */
+  --font-size-2xl: 1.5rem;     /* 24px */
+  --font-size-3xl: 1.875rem;   /* 30px */
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  /* Spacing */
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-5: 1.25rem;  /* 20px */
+  --space-6: 1.5rem;   /* 24px */
+  --space-8: 2rem;     /* 32px */
+  --space-10: 2.5rem;  /* 40px */
+  --space-12: 3rem;    /* 48px */
+
+  /* Border Radius */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(1, 15, 28, 0.04);
+  --shadow-sm: 0 2px 4px rgba(1, 15, 28, 0.06);
+  --shadow-md: 0 4px 12px rgba(1, 15, 28, 0.08);
+  --shadow-lg: 0 10px 25px rgba(1, 15, 28, 0.1);
+  --shadow-xl: 0 20px 40px rgba(1, 15, 28, 0.12);
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Layout Dimensions */
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 76px;
+  --header-height: 70px;
+}
