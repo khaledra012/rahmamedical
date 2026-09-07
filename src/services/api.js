@@ -1,8 +1,16 @@
 import axios from 'axios';
 
+const getBaseUrl = () => {
+  let url = (import.meta.env.VITE_API_BASE_URL || '/api').trim();
+  // تحويل البروتوكول لحروف صغيرة لتفادي خطأ Unsupported protocol HTTPS
+  if (/^[a-zA-Z]+:\/\//.test(url)) {
+    url = url.replace(/^[a-zA-Z]+:\/\//, (match) => match.toLowerCase());
+  }
+  return url.replace(/\/+$/, '');
+};
+
 const api = axios.create({
-  // Relative /api works behind a reverse proxy; VITE_API_BASE_URL supports a separately hosted API.
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: getBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
