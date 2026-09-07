@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button, Badge, Alert, Table, Spinner, Input } from '../../components';
 import { ProductEnrichModal } from './ProductEnrichModal';
 import { productsService } from '../../services/productsService';
-import api from '../../services/api';
 import {
   Package,
   Search,
@@ -13,7 +12,6 @@ import {
   ShoppingBag,
   Store,
   ChevronDown,
-  PlusCircle,
 } from 'lucide-react';
 import './Products.css';
 
@@ -138,45 +136,6 @@ export const Products = () => {
       setError(err?.message || 'فشلت إعادة المحاولة');
     } finally {
       setActionLoadingId(null);
-    }
-  };
-
-  const handleSimulateDaftraWebhook = async () => {
-    setIsLoading(true);
-    try {
-      const randomId = Math.floor(1000 + Math.random() * 9000);
-      const demoProducts = [
-        { name: 'جهاز قياس ضغط الدم الرقمي الدقيق', code: `MED-BPM-${randomId}`, price: 185.0, cost: 120.0, stock: 45, cat: 'أجهزة فحص طبي' },
-        { name: 'مقياس حرارة طبي للأطفال بالأشعة تحت الحمراء', code: `MED-THM-${randomId}`, price: 95.0, cost: 60.0, stock: 60, cat: 'أجهزة فحص طبي' },
-        { name: 'شاش قطني معقم عالي الامتصاص (10×10 سم)', code: `MED-GZ-${randomId}`, price: 18.0, cost: 10.0, stock: 250, cat: 'شاش وضمادات' },
-        { name: 'لاصق جروح طبي مقاوم للماء (علبة 100 قطعة)', code: `MED-PLST-${randomId}`, price: 28.0, cost: 14.0, stock: 120, cat: 'مستلزمات طبية' },
-      ];
-      const selected = demoProducts[Math.floor(Math.random() * demoProducts.length)];
-
-      await api.post('/webhooks/daftra/product-created', {
-        Product: {
-          id: randomId,
-          name: selected.name,
-          product_code: selected.code,
-          barcode: `62810010${randomId}`,
-          unit_price: selected.price,
-          cost: selected.cost,
-          stock_balance: selected.stock,
-          storehouse_id: 1,
-          category_name: selected.cat,
-          description: `مستلزمات طبية معتمدة عالية الجودة - كود ${selected.code}`,
-          weight: 0.35,
-          is_taxable: true,
-          tax_percentage: 15,
-        },
-      });
-
-      setActionSuccess(`تم استقبال منتج تجريبي جديد من دفترة (#${randomId}: ${selected.name}) بنجاح!`);
-      fetchProducts(1);
-    } catch (err) {
-      setError(err?.message || 'فشلت محاكاة الـ Webhook');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -378,16 +337,6 @@ export const Products = () => {
 
         <div className="header-actions-group">
           <Button
-            variant="outline"
-            size="md"
-            icon={<PlusCircle size={16} />}
-            onClick={handleSimulateDaftraWebhook}
-            title="محاكاة وصول منتج جديد من دفترة"
-          >
-            محاكاة منتج دفترة 📥
-          </Button>
-
-          <Button
             variant="secondary"
             size="md"
             icon={<RefreshCw size={16} />}
@@ -448,7 +397,7 @@ export const Products = () => {
             <Package size={48} color="var(--color-border)" />
             <h3 className="empty-title">لا توجد منتجات مطابقة</h3>
             <p className="empty-desc">
-              لم يتم استلام منتجات من دفترة بهذه الفلاتر بعد. يمكنك النقر على زر "محاكاة منتج دفترة" لإنشاء بيانات فورية.
+              لم يتم استلام منتجات من دفترة بهذه الفلاتر بعد.
             </p>
           </div>
         ) : (

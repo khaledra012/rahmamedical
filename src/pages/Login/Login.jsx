@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button, Input, Alert, RahmaLogo } from '../../components';
-import { Mail, Lock, Eye, EyeOff, ShieldCheck, KeyRound } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import './Login.css';
 
 export const Login = () => {
@@ -39,12 +39,6 @@ export const Login = () => {
     }
   };
 
-  const handleFillDemoAdmin = () => {
-    setEmail('admin@daftra-sync.com');
-    setPassword('Admin@2026');
-    setError(null);
-  };
-
   return (
     <div className="login-root">
       <div className="login-wrapper">
@@ -68,7 +62,7 @@ export const Login = () => {
           <Input
             label="البريد الإلكتروني"
             type="email"
-            placeholder="admin@daftra-sync.com"
+            placeholder="name@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             icon={<Mail size={18} />}
@@ -108,19 +102,6 @@ export const Login = () => {
             تسجيل الدخول
           </Button>
         </form>
-
-        {/* Default Admin Quick Login Card */}
-        <div className="login-demo-helper" onClick={handleFillDemoAdmin}>
-          <div className="demo-helper-header">
-            <KeyRound size={16} color="var(--color-primary)" />
-            <span>بيانات حساب المدير الافتراضي (لأول تشغيل):</span>
-          </div>
-          <div className="demo-helper-creds">
-            <div><strong>الإيميل:</strong> admin@daftra-sync.com</div>
-            <div><strong>الباسورد:</strong> Admin@2026</div>
-          </div>
-          <span className="demo-helper-action">انقر هنا للتعبئة السريعة ⚡</span>
-        </div>
 
         {/* Secure Footer */}
         <div className="login-footer">
