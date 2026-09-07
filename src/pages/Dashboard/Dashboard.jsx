@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Button, Badge, Alert, Table, Spinner } from '../../components';
 import api from '../../services/api';
+import { logsService } from '../../services/logsService';
 
 export const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -31,9 +32,23 @@ export const Dashboard = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.get('/products/stats');
-      if (res.data) {
-        setStats(res.data);
+      const [statsRes, logsRes] = await Promise.allSettled([
+        api.get('/products/stats'),
+        logsService.getLogs({ limit: 6, page: 1 }),
+      ]);
+
+      let mergedLogs = [];
+      if (logsRes.status === 'fulfilled' && logsRes.value?.logs) {
+        mergedLogs = logsRes.value.logs;
+      }
+
+      if (statsRes.status === 'fulfilled' && statsRes.value?.data) {
+        setStats({
+          ...statsRes.value.data,
+          recentLogs: mergedLogs.length > 0 ? mergedLogs : (statsRes.value.data.recentLogs || []),
+        });
+      } else if (mergedLogs.length > 0) {
+        setStats((prev) => ({ ...prev, recentLogs: mergedLogs }));
       }
     } catch (err) {
       console.warn('Failed to fetch dashboard stats:', err);
@@ -90,27 +105,49 @@ export const Dashboard = () => {
     {
       header: 'نوع العملية',
       key: 'action',
-      render: (val, row) => (
-        <div className="font-semibold">
-          {row.action === 'CREATE' ? 'نشر منتج جديد' : row.action === 'UPDATE' ? 'تحديث منتج' : 'مزامنة'}
-        </div>
-      ),
+      render: (val, row) => {
+        const isOrder = row.entityType === 'ORDER';
+        const isInventory = row.entityType === 'INVENTORY';
+        let actionLabel = 'مزامنة';
+        if (isOrder) {
+          actionLabel = row.action === 'CREATE' ? 'استقبال طلب جديد' : 'مزامنة طلب';
+        } else if (isInventory) {
+          actionLabel = 'مزامنة مخزون';
+        } else {
+          actionLabel = row.action === 'CREATE' ? 'نشر منتج جديد' : 'تحديث منتج';
+        }
+
+        return (
+          <div className="font-semibold" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span>{actionLabel}</span>
+            {row.entityId ? <span className="text-muted text-xs font-mono">#{row.entityId}</span> : null}
+          </div>
+        );
+      },
     },
     {
       header: 'المسار',
       key: 'direction',
-      render: (dir) => (
-        <span className="text-muted font-mono text-xs">
-          {dir === 'DAFTRA_TO_ZID' ? 'دفترة ➔ المتاجر المتصلة' : 'المتاجر ➔ دفترة'}
-        </span>
-      ),
+      render: (dir) => {
+        let label = dir;
+        if (dir === 'DAFTRA_TO_ZID') label = 'دفترة ➔ متجر زد';
+        else if (dir === 'ZID_TO_DAFTRA') label = 'متجر زد ➔ دفترة';
+        else if (dir === 'DAFTRA_TO_TRENDYOL') label = 'دفترة ➔ ترينديول';
+        else if (dir === 'TRENDYOL_TO_DAFTRA') label = 'ترينديول ➔ دفترة';
+        return <span className="text-muted font-mono text-xs">{label}</span>;
+      },
     },
     {
       header: 'الوقت',
       key: 'createdAt',
       render: (val) => (
         <span className="text-muted text-xs">
-          {val ? new Date(val).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }) : 'الآن'}
+          {val
+            ? new Date(val).toLocaleTimeString('ar-SA', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : 'الآن'}
         </span>
       ),
     },
@@ -198,10 +235,10 @@ export const Dashboard = () => {
         <div className="section-header">
           <div>
             <h3 className="section-title">آخر حركات المزامنة والعمليات الفعلية</h3>
-            <p className="section-subtitle">سجل العمليات الآلية الموثقة في قاعدة البيانات لحظياً</p>
+            <p className="section-subtitle">آخر 6 عمليات مسجلة وموثقة في سجل العمليات</p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => navigate('/products')}>
-            عرض شاشة المنتجات
+          <Button variant="outline" size="sm" onClick={() => navigate('/logs')}>
+            عرض سجل العمليات
           </Button>
         </div>
 
