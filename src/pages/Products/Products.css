@@ -48,7 +48,10 @@
   align-items: center;
   gap: var(--space-1);
   overflow-x: auto;
-  padding-bottom: 2px;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding-bottom: 4px;
 }
 
 .filter-tab-btn {
@@ -59,6 +62,7 @@
   color: var(--color-text-secondary);
   background-color: transparent;
   white-space: nowrap;
+  flex-shrink: 0;
   transition: all var(--transition-fast);
 }
 
@@ -295,11 +299,77 @@
 }
 
 @media (max-width: 768px) {
+  .products-page {
+    gap: var(--space-4);
+  }
+
+  .products-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .products-title {
+    font-size: 1.25rem;
+    line-height: 1.35;
+  }
+
+  .products-subtitle {
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+
+  .header-actions-group {
+    width: 100%;
+  }
+
+  .header-actions-group button,
+  .header-actions-group .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
   .products-toolbar {
     flex-direction: column;
     align-items: stretch;
+    gap: var(--space-3);
+    padding: 10px 12px;
   }
+
+  .status-filter-tabs {
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+
+  .status-filter-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filter-tab-btn {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
   .products-search-box {
     min-width: 100%;
+    width: 100%;
+  }
+
+  .products-pagination-row {
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+    text-align: center;
+    padding: 12px;
+  }
+
+  .pagination-buttons {
+    width: 100%;
+    justify-content: center;
   }
 }

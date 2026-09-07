@@ -122,7 +122,10 @@
   align-items: center;
   gap: var(--space-1);
   overflow-x: auto;
-  padding-bottom: 2px;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding-bottom: 4px;
 }
 
 .filter-tab-btn {
@@ -135,6 +138,7 @@
   border: none;
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
   transition: all var(--transition-fast);
 }
 
@@ -441,4 +445,84 @@
 .accounting-val {
   font-weight: 600;
   color: var(--color-text-primary);
+}
+
+@media (max-width: 768px) {
+  .orders-page {
+    gap: var(--space-4);
+  }
+
+  .orders-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .orders-title {
+    font-size: 1.25rem;
+    line-height: 1.35;
+  }
+
+  .orders-subtitle {
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+
+  .orders-actions-group {
+    width: 100%;
+  }
+
+  .orders-actions-group button,
+  .orders-actions-group .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .orders-stats-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+
+  .orders-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+    padding: 10px 12px;
+  }
+
+  .orders-filter-tabs {
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+
+  .orders-filter-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filter-tab-btn {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .orders-search-wrapper {
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .orders-table {
+    min-width: 650px;
+  }
+
+  .order-modal-backdrop {
+    padding: 10px;
+  }
+
+  .order-modal-content {
+    max-height: 95vh;
+  }
 }

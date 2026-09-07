@@ -482,3 +482,91 @@
   font-size: var(--font-size-sm);
   line-height: 1.5;
 }
+
+@media (max-width: 768px) {
+  .sync-logs-page {
+    gap: var(--space-4);
+  }
+
+  .sync-logs-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .sync-logs-title {
+    font-size: 1.25rem;
+    line-height: 1.35;
+  }
+
+  .sync-logs-subtitle {
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+
+  .sync-logs-actions {
+    width: 100%;
+  }
+
+  .sync-logs-actions button,
+  .sync-logs-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .logs-stats-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+
+  .logs-controls-panel {
+    padding: 12px;
+  }
+
+  .logs-controls-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .logs-filter-group {
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+
+  .logs-filter-group::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filter-chip {
+    flex-shrink: 0;
+  }
+
+  .search-input-wrapper {
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .logs-table {
+    min-width: 650px;
+  }
+
+  .logs-pagination {
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    text-align: center;
+  }
+
+  .log-modal-backdrop {
+    padding: 10px;
+  }
+
+  .log-modal {
+    max-height: 95vh;
+  }
+}

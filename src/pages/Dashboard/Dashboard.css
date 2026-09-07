@@ -193,11 +193,29 @@
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-4);
-    padding: var(--space-5);
+    padding: var(--space-4);
   }
 
   .banner-actions {
     width: 100%;
-    justify-content: flex-start;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px !important;
+  }
+
+  .banner-actions button,
+  .banner-actions a {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+
+  .recent-activity-section {
+    padding: var(--space-4);
   }
 }
