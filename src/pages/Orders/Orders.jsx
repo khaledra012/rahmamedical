@@ -16,7 +16,6 @@ import {
   Building2,
   CreditCard,
   X,
-  Sparkles,
 } from 'lucide-react';
 
 export const Orders = () => {
@@ -31,7 +30,6 @@ export const Orders = () => {
     stalledOrders: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [simulating, setSimulating] = useState(false);
   const [retryingId, setRetryingId] = useState(null);
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -63,26 +61,6 @@ export const Orders = () => {
       console.error('Failed to load orders data:', err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSimulateOrder = async () => {
-    try {
-      setSimulating(true);
-      const res = await ordersService.simulateOrder();
-      setFeedbackMessage({
-        type: 'success',
-        text: `تم استقبال طلب محاكاة جديد (#${res.storeOrderId}) بنجاح!`,
-      });
-      await loadData();
-    } catch (err) {
-      setFeedbackMessage({
-        type: 'error',
-        text: 'تعذر إنشاء طلب المحاكاة.',
-      });
-    } finally {
-      setSimulating(false);
-      setTimeout(() => setFeedbackMessage(null), 4000);
     }
   };
 
@@ -179,11 +157,12 @@ export const Orders = () => {
         <div className="orders-actions-group">
           <button
             className="btn btn-primary"
-            onClick={handleSimulateOrder}
-            disabled={simulating}
+            onClick={loadData}
+            disabled={loading}
+            title="تحديث قائمة الطلبات"
           >
-            <Sparkles size={15} />
-            {simulating ? 'جاري إنشاء الطلب...' : 'محاكاة طلب تجريبي 🧪'}
+            <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
+            تحديث الطلبات
           </button>
         </div>
       </div>
@@ -319,7 +298,7 @@ export const Orders = () => {
                       <ShoppingCart size={40} className="orders-empty-icon" />
                       <h4 className="orders-empty-title">لا توجد طلبات تطابق الفلتر الحالي</h4>
                       <p className="orders-empty-desc">
-                        يمكنك الضغط على زر "محاكاة طلب تجريبي 🧪" لتجربة التدفق العكسي وإصدار مسودة بدفترة فوراً.
+                        لم يتم استلام أي طلبات جديدة بعد. ستظهر الطلبات هنا تلقائياً عند إنشائها في متجر زد أو ترينديول.
                       </p>
                     </div>
                   </td>
