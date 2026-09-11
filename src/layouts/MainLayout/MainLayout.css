@@ -50,3 +50,24 @@
     padding: 0 12px;
   }
 }
+
+.layout-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-6);
+  margin-top: var(--space-6);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  border-top: 1px solid var(--color-border);
+}
+
+.layout-footer-divider {
+  color: var(--color-border);
+}
+
+.layout-footer-by {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}

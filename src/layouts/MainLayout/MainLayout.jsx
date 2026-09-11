@@ -42,6 +42,11 @@ export const MainLayout = () => {
           <div className="layout-container">
             <Outlet />
           </div>
+          <footer className="layout-footer">
+            <span>رحمة للمستلزمات الطبية</span>
+            <span className="layout-footer-divider">•</span>
+            <span className="layout-footer-by">By Tadween</span>
+          </footer>
         </main>
       </div>
     </div>

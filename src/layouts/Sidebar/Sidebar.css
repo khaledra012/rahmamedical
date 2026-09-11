@@ -141,6 +141,15 @@
   color: var(--color-text-muted);
 }
 
+.sidebar-by-tadween {
+  margin-top: var(--space-2);
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  letter-spacing: 0.5px;
+}
+
 /* Mobile Responsive */
 @media (max-width: 992px) {
   .sidebar {

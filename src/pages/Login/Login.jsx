@@ -108,6 +108,9 @@ export const Login = () => {
           <ShieldCheck size={16} color="var(--color-success)" />
           <span>رحمة للمستلزمات الطبية — اتصال مشفّر وآمن</span>
         </div>
+        <div className="login-by-tadween">
+          <span>By Tadween</span>
+        </div>
       </div>
     </div>
   );

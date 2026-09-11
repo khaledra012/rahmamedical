@@ -79,6 +79,9 @@ export const Sidebar = ({ isOpen, onClose }) => {
             </div>
             <p className="integration-status-text">رحمة للمستلزمات الطبية</p>
           </div>
+          <div className="sidebar-by-tadween">
+            <span>By Tadween</span>
+          </div>
         </div>
       </aside>
     </>
