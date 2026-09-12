@@ -23,6 +23,7 @@ export const Products = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [actionSuccess, setActionSuccess] = useState(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Modal & Dropdown State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -68,6 +69,22 @@ export const Products = () => {
   useEffect(() => {
     fetchProducts(1);
   }, [fetchProducts]);
+
+  const handleSyncDaftra = async () => {
+    setIsSyncing(true);
+    setError(null);
+    setActionSuccess(null);
+    try {
+      const res = await productsService.syncWithDaftra();
+      const count = res?.data?.processedCount ?? res?.processedCount ?? 0;
+      setActionSuccess(`تمت المزامنة مع دفترة بنجاح! تم فحص واستيراد ${count} منتج جديد/معدل.`);
+      fetchProducts(1);
+    } catch (err) {
+      setError(err?.message || 'تعذرت المزامنة مع خادم دفترة');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const handleOpenEnrichModal = (product) => {
     setCurrentProduct(product);
@@ -336,6 +353,17 @@ export const Products = () => {
         </div>
 
         <div className="header-actions-group">
+          <Button
+            variant="primary"
+            size="md"
+            icon={<RefreshCw size={16} />}
+            onClick={handleSyncDaftra}
+            isLoading={isSyncing}
+            disabled={isSyncing}
+            title="سحب ومزامنة أحدث المنتجات من دفترة فورياً"
+          >
+            مزامنة مع دفترة 🔄
+          </Button>
           <Button
             variant="secondary"
             size="md"

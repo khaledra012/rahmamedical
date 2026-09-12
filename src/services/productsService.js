@@ -10,6 +10,14 @@ export const productsService = {
   },
 
   /**
+   * Sync products on-demand from Daftra
+   */
+  async syncWithDaftra() {
+    const response = await api.post('/products/sync-daftra');
+    return response.data || response;
+  },
+
+  /**
    * Get single product details
    */
   async getProductById(id) {
