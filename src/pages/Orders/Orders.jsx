@@ -102,7 +102,7 @@ export const Orders = () => {
         return (
           <span className="order-status-badge status-draft-created">
             <CheckCircle2 size={13} />
-            مسودة #{order.daftraInvoiceNumber || order.daftraDraftInvoiceId}
+            فاتورة #{order.daftraInvoiceNumber || order.daftraDraftInvoiceId}
           </span>
         );
       case 'UNMAPPED_PAYMENT':
@@ -150,7 +150,7 @@ export const Orders = () => {
         <div>
           <h1 className="orders-title">إدارة الطلبات والفوترة الآلية</h1>
           <p className="orders-subtitle">
-            التدفق العكسي: جلب طلبات زد وترينديول ➔ إصدار مسودات فواتير في دفترة ERP (بدون أي تأثير على المخزون حتى الاعتماد)
+            التدفق المباشر: جلب طلبات زد وترينديول ➔ إصدار واعتماد الفواتير آلياً في دفترة ERP وتوجيه السداد للخزائن
           </p>
         </div>
 
@@ -206,7 +206,7 @@ export const Orders = () => {
           </div>
           <div className="stat-details">
             <span className="stat-value">{stats.draftCreatedOrders || 0}</span>
-            <span className="stat-label">مسودات فواتير في دفترة (جاهزة للاعتماد)</span>
+            <span className="stat-label">فواتير صادرة ومعتمدة في دفترة</span>
           </div>
         </div>
 
@@ -246,7 +246,7 @@ export const Orders = () => {
             className={`filter-tab-btn ${statusFilter === 'DRAFT_CREATED' ? 'filter-tab-active' : ''}`}
             onClick={() => setStatusFilter('DRAFT_CREATED')}
           >
-            مسودات صادرة بدفترة ({stats.draftCreatedOrders || 0})
+            فواتير صادرة بدفترة ({stats.draftCreatedOrders || 0})
           </button>
           <button
             className={`filter-tab-btn ${statusFilter === 'STALLED' ? 'filter-tab-active' : ''}`}
@@ -261,7 +261,7 @@ export const Orders = () => {
           <input
             type="text"
             className="orders-search-input"
-            placeholder="بحث برقم الطلب، العميل، رقم المسودة..."
+            placeholder="بحث برقم الطلب، العميل، رقم الفاتورة..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -278,7 +278,7 @@ export const Orders = () => {
                 <th>العميل</th>
                 <th>وسيلة الدفع والخزينة</th>
                 <th>إجمالي المبلغ</th>
-                <th>حالة مسودة الفاتورة بدفترة</th>
+                <th>حالة الفاتورة بدفترة</th>
                 <th>تاريخ الطلب</th>
                 <th>الإجراءات</th>
               </tr>
@@ -288,7 +288,7 @@ export const Orders = () => {
                 <tr>
                   <td colSpan="7" style={{ textAlign: 'center', padding: '40px' }}>
                     <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 8px' }} />
-                    <p style={{ color: 'var(--color-text-muted)' }}>جاري تحميل الطلبات والمسودات...</p>
+                    <p style={{ color: 'var(--color-text-muted)' }}>جاري تحميل الطلبات والفواتير...</p>
                   </td>
                 </tr>
               ) : filteredOrders.length === 0 ? (
@@ -407,7 +407,7 @@ export const Orders = () => {
                             className="btn-retry-order"
                             onClick={() => handleRetryOrder(order.id)}
                             disabled={retryingId === order.id}
-                            title="إعادة محاولة إصدار مسودة الفاتورة"
+                            title="إعادة محاولة إصدار الفاتورة"
                           >
                             <RefreshCw
                               size={12}
@@ -458,7 +458,7 @@ export const Orders = () => {
                 <div className="accounting-item">
                   <span className="accounting-label">نوع المعاملة في دفترة:</span>
                   <span className="accounting-val" style={{ color: '#047857' }}>
-                    مسودة صامتة (is_draft: 1) — بدون أي خصم مخزني أو قيود حتى الاعتماد
+                    فاتورة معتمدة ومباشرة (is_draft: 0) — تخصم المخزون وتسجل القيود وسند السداد فوراً
                   </span>
                 </div>
 
@@ -501,7 +501,7 @@ export const Orders = () => {
 
                 {selectedOrder.daftraInvoiceNumber && (
                   <div className="accounting-item">
-                    <span className="accounting-label">رقم مسودة الفاتورة في دفترة:</span>
+                    <span className="accounting-label">رقم الفاتورة في دفترة:</span>
                     <span className="accounting-val" style={{ color: '#047857', fontWeight: 700 }}>
                       {selectedOrder.daftraInvoiceNumber}
                     </span>
