@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Orders.css';
 import { ordersService } from '../../services/ordersService';
+import { Button } from '../../components';
 import {
   ShoppingCart,
   CheckCircle2,
@@ -29,6 +30,7 @@ export const Orders = () => {
     unmappedProductOrders: 0,
     stalledOrders: 0,
   });
+  const [meta, setMeta] = useState({ total: 0, page: 1, limit: 20, totalPages: 1 });
   const [loading, setLoading] = useState(true);
   const [retryingId, setRetryingId] = useState(null);
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -36,15 +38,15 @@ export const Orders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [feedbackMessage, setFeedbackMessage] = useState(null);
 
-  // Load orders and stats on mount
+  // Load orders and stats on mount, and when statusFilter changes (reset to page 1)
   useEffect(() => {
-    loadData();
+    loadData(1);
   }, [statusFilter]);
 
-  const loadData = async () => {
+  const loadData = async (page = 1) => {
     try {
       setLoading(true);
-      const params = {};
+      const params = { page, limit: 20 };
       if (statusFilter !== 'ALL') {
         params.status = statusFilter;
       }
@@ -53,7 +55,14 @@ export const Orders = () => {
         ordersService.getOrderStats(),
       ]);
 
-      setOrders(ordersRes.data?.orders || []);
+      const resData = ordersRes.data;
+      setOrders(resData?.orders || []);
+      setMeta({
+        total: resData?.total || 0,
+        page: resData?.page || page,
+        limit: 20,
+        totalPages: resData?.totalPages || 1,
+      });
       if (statsRes) {
         setStats(statsRes);
       }
@@ -157,7 +166,7 @@ export const Orders = () => {
         <div className="orders-actions-group">
           <button
             className="btn btn-primary"
-            onClick={loadData}
+            onClick={() => loadData(1)}
             disabled={loading}
             title="تحديث قائمة الطلبات"
           >
@@ -425,6 +434,34 @@ export const Orders = () => {
           </table>
         </div>
       </div>
+
+      {/* Pagination Row */}
+      {!loading && meta.totalPages > 1 && (
+        <div className="products-pagination-row">
+          <span className="pagination-info text-sm text-muted">
+            إجمالي الطلبات: <strong>{meta.total}</strong> | الصفحة <strong>{meta.page}</strong> من{' '}
+            <strong>{meta.totalPages}</strong>
+          </span>
+          <div className="pagination-buttons">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={meta.page <= 1}
+              onClick={() => loadData(meta.page - 1)}
+            >
+              السابق
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={meta.page >= meta.totalPages}
+              onClick={() => loadData(meta.page + 1)}
+            >
+              التالي
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Order Details & Accounting Modal */}
       {selectedOrder && (

@@ -526,3 +526,25 @@
     max-height: 95vh;
   }
 }
+
+/* ── Pagination ── */
+.products-pagination-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--color-border);
+  background-color: #fafbfc;
+  border-radius: 0 0 12px 12px;
+}
+
+.pagination-info {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.pagination-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
