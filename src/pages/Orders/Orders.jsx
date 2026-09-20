@@ -25,6 +25,25 @@ const getOrderExportInfo = (order) => {
   if (!order) return { isExport: false, countryName: '' };
 
   const raw = order.rawOrderData;
+  const directCode =
+    raw?.shipping?.address?.country?.code ||
+    raw?.shipping_address?.country?.code ||
+    raw?.shipping?.country_code ||
+    raw?.shipping_address?.countryCode;
+
+  // 1. إذا كان الكود الدولي (ISO 2-letter) مرسلاً من المنصة (زد أو ترينديول)
+  if (directCode && /^[A-Za-z]{2}$/.test(String(directCode).trim())) {
+    const code = String(directCode).trim().toUpperCase();
+    if (code !== 'SA' && code !== 'KSA') {
+      const countryName =
+        raw?.shipping?.address?.country?.name ||
+        raw?.shipping_address?.country?.name ||
+        code;
+      return { isExport: true, countryName };
+    }
+    return { isExport: false, countryName: 'السعودية' };
+  }
+
   const rawCountry =
     raw?.shipping?.address?.country?.name ||
     raw?.shipping_address?.country?.name ||
@@ -35,53 +54,37 @@ const getOrderExportInfo = (order) => {
     raw?.shipping_address?.country?.id;
 
   const addr = (order.shippingAddress || '').trim();
+  const saudiTerms = ['السعودية', 'المملكة العربية السعودية', 'KSA', 'SA', 'Saudi Arabia', 'سعودية', 'saudi'];
 
-  const saudiTerms = ['السعودية', 'المملكة العربية السعودية', 'KSA', 'SA', 'Saudi Arabia'];
-  const intlCountries = [
-    { code: 'AE', name: 'الإمارات', keywords: ['الإمارات', 'امارات', 'دبي', 'أبوظبي', 'الشارقة', 'عجمان', 'UAE', 'United Arab Emirates', 'Emirates'] },
-    { code: 'KW', name: 'الكويت', keywords: ['الكويت', 'Kuwait'] },
-    { code: 'QA', name: 'قطر', keywords: ['قطر', 'Qatar'] },
-    { code: 'OM', name: 'عُمان', keywords: ['عمان', 'سلطنة عمان', 'Oman'] },
-    { code: 'BH', name: 'البحرين', keywords: ['البحرين', 'Bahrain'] },
-    { code: 'EG', name: 'مصر', keywords: ['مصر', 'Egypt'] },
-    { code: 'JO', name: 'الأردن', keywords: ['الأردن', 'الاردن', 'Jordan'] },
-  ];
-
-  // If rawCountryId is specific (Zid country IDs: SA is 64)
-  if (rawCountryId && String(rawCountryId) !== '64') {
-    const matched = intlCountries.find((c) =>
-      c.keywords.some((k) => typeof rawCountry === 'string' && rawCountry.includes(k))
-    );
+  // 2. فحص معرف الدولة في زد (معرف 64 هو السعودية - أي معرف آخر هو تصدير دولي)
+  if (rawCountryId && String(rawCountryId) !== '64' && String(rawCountryId) !== '184') {
     return {
       isExport: true,
-      countryName: matched?.name || (typeof rawCountry === 'string' ? rawCountry : 'دولي'),
+      countryName: typeof rawCountry === 'string' ? rawCountry : 'دولي',
     };
   }
 
-  // Check rawCountry name
+  // 3. فحص اسم الدولة
   if (typeof rawCountry === 'string' && rawCountry.trim()) {
-    const cleanCountry = rawCountry.trim();
-    if (!saudiTerms.some((s) => cleanCountry.includes(s))) {
-      const matched = intlCountries.find((c) => c.keywords.some((k) => cleanCountry.includes(k)));
-      return { isExport: true, countryName: matched?.name || cleanCountry };
+    const cleanCountry = rawCountry.trim().toLowerCase();
+    const isSaudi = saudiTerms.some((s) => cleanCountry.includes(s.toLowerCase()));
+    if (!isSaudi) {
+      return { isExport: true, countryName: rawCountry.trim() };
     }
   }
 
-  // Check statusMessage or notes
+  // 4. فحص رسالة الفاتورة أو الملاحظات
   if (order.statusMessage && (order.statusMessage.includes('VATEX-SA-EXPORT') || order.statusMessage.includes('تصدير'))) {
     return { isExport: true, countryName: 'دولي' };
   }
 
-  // Check shippingAddress string
+  // 5. فحص نص العنوان الكامل
   if (addr) {
-    const isSaudi = saudiTerms.some((term) => addr.includes(term));
-    for (const item of intlCountries) {
-      if (item.keywords.some((kw) => addr.includes(kw))) {
-        return { isExport: true, countryName: item.name };
-      }
-    }
-    if (!isSaudi && (addr.includes('دولي') || addr.includes('تصدير'))) {
-      return { isExport: true, countryName: 'دولي' };
+    const isSaudi = saudiTerms.some((term) => addr.toLowerCase().includes(term.toLowerCase()));
+    if (!isSaudi && (addr.includes('دولي') || addr.includes('تصدير') || addr.length > 5)) {
+      // إذا كان العنوان لا يحتوي على أي ذكر للسعودية
+      const firstPart = addr.split('-')[0]?.trim();
+      return { isExport: true, countryName: firstPart || 'دولي' };
     }
   }
 
