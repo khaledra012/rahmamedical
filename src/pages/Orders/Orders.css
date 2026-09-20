@@ -249,6 +249,13 @@
   color: #c2410c;
 }
 
+.store-badge-export {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  font-weight: 700;
+}
+
 /* Order Status Badges */
 .order-status-badge {
   display: inline-flex;

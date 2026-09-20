@@ -17,7 +17,76 @@ import {
   Building2,
   CreditCard,
   X,
+  Globe,
 } from 'lucide-react';
+
+// Helper to determine if an order is destined for international export
+const getOrderExportInfo = (order) => {
+  if (!order) return { isExport: false, countryName: '' };
+
+  const raw = order.rawOrderData;
+  const rawCountry =
+    raw?.shipping?.address?.country?.name ||
+    raw?.shipping_address?.country?.name ||
+    raw?.shipping?.country ||
+    raw?.shipping_address?.country;
+  const rawCountryId =
+    raw?.shipping?.address?.country?.id ||
+    raw?.shipping_address?.country?.id;
+
+  const addr = (order.shippingAddress || '').trim();
+
+  const saudiTerms = ['السعودية', 'المملكة العربية السعودية', 'KSA', 'SA', 'Saudi Arabia'];
+  const intlCountries = [
+    { code: 'AE', name: 'الإمارات', keywords: ['الإمارات', 'امارات', 'دبي', 'أبوظبي', 'الشارقة', 'عجمان', 'UAE', 'United Arab Emirates', 'Emirates'] },
+    { code: 'KW', name: 'الكويت', keywords: ['الكويت', 'Kuwait'] },
+    { code: 'QA', name: 'قطر', keywords: ['قطر', 'Qatar'] },
+    { code: 'OM', name: 'عُمان', keywords: ['عمان', 'سلطنة عمان', 'Oman'] },
+    { code: 'BH', name: 'البحرين', keywords: ['البحرين', 'Bahrain'] },
+    { code: 'EG', name: 'مصر', keywords: ['مصر', 'Egypt'] },
+    { code: 'JO', name: 'الأردن', keywords: ['الأردن', 'الاردن', 'Jordan'] },
+  ];
+
+  // If rawCountryId is specific (Zid country IDs: SA is 64)
+  if (rawCountryId && String(rawCountryId) !== '64') {
+    const matched = intlCountries.find((c) =>
+      c.keywords.some((k) => typeof rawCountry === 'string' && rawCountry.includes(k))
+    );
+    return {
+      isExport: true,
+      countryName: matched?.name || (typeof rawCountry === 'string' ? rawCountry : 'دولي'),
+    };
+  }
+
+  // Check rawCountry name
+  if (typeof rawCountry === 'string' && rawCountry.trim()) {
+    const cleanCountry = rawCountry.trim();
+    if (!saudiTerms.some((s) => cleanCountry.includes(s))) {
+      const matched = intlCountries.find((c) => c.keywords.some((k) => cleanCountry.includes(k)));
+      return { isExport: true, countryName: matched?.name || cleanCountry };
+    }
+  }
+
+  // Check statusMessage or notes
+  if (order.statusMessage && (order.statusMessage.includes('VATEX-SA-EXPORT') || order.statusMessage.includes('تصدير'))) {
+    return { isExport: true, countryName: 'دولي' };
+  }
+
+  // Check shippingAddress string
+  if (addr) {
+    const isSaudi = saudiTerms.some((term) => addr.includes(term));
+    for (const item of intlCountries) {
+      if (item.keywords.some((kw) => addr.includes(kw))) {
+        return { isExport: true, countryName: item.name };
+      }
+    }
+    if (!isSaudi && (addr.includes('دولي') || addr.includes('تصدير'))) {
+      return { isExport: true, countryName: 'دولي' };
+    }
+  }
+
+  return { isExport: false, countryName: '' };
+};
 
 export const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -321,12 +390,27 @@ export const Orders = () => {
                         <span style={{ fontWeight: 700, color: 'var(--color-primary)' }}>
                           #{order.storeOrderId}
                         </span>
-                        <div>
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
                           {order.storeType === 'ZID' ? (
                             <span className="store-badge store-badge-zid">متجر زد</span>
                           ) : (
                             <span className="store-badge store-badge-trendyol">ترينديول</span>
                           )}
+                          {(() => {
+                            const { isExport, countryName } = getOrderExportInfo(order);
+                            if (isExport) {
+                              return (
+                                <span
+                                  className="store-badge store-badge-export"
+                                  title="تصدير دولي - ضريبة صفرية 0% (كود الزكاة: VATEX-SA-EXPORT)"
+                                >
+                                  <Globe size={11} style={{ verticalAlign: 'middle', marginLeft: '3px' }} />
+                                  تصدير {countryName ? `(${countryName})` : 'دولي'}
+                                </span>
+                              );
+                            }
+                            return null;
+                          })()}
                         </div>
                       </div>
                     </td>
@@ -482,106 +566,141 @@ export const Orders = () => {
               </button>
             </div>
 
-            <div className="order-modal-body">
-              {/* Accounting Routing Card */}
-              <div className="accounting-routing-card">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                  <Building2 size={16} color="var(--color-primary)" />
-                  <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--color-primary)' }}>
-                    التوجيه المحاسبي المعتمد في دفترة (Accounting Routing)
-                  </span>
-                </div>
+            {(() => {
+              const selectedOrderExport = getOrderExportInfo(selectedOrder);
+              return (
+                <div className="order-modal-body">
+                  {/* Accounting Routing Card */}
+                  <div className="accounting-routing-card">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                      <Building2 size={16} color="var(--color-primary)" />
+                      <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--color-primary)' }}>
+                        التوجيه المحاسبي المعتمد في دفترة (Accounting Routing)
+                      </span>
+                    </div>
 
-                <div className="accounting-item">
-                  <span className="accounting-label">نوع المعاملة في دفترة:</span>
-                  <span className="accounting-val" style={{ color: '#047857' }}>
-                    فاتورة معتمدة ومباشرة (is_draft: 0) — تخصم المخزون وتسجل القيود وسند السداد فوراً
-                  </span>
-                </div>
+                    <div className="accounting-item">
+                      <span className="accounting-label">نوع المعاملة في دفترة:</span>
+                      <span className="accounting-val" style={{ color: '#047857' }}>
+                        فاتورة معتمدة ومباشرة (is_draft: 0) — تخصم المخزون وتسجل القيود وسند السداد فوراً
+                      </span>
+                    </div>
 
-                <div className="accounting-item">
-                  <span className="accounting-label">حساب الإيراد (Sales Revenue GL):</span>
-                  <span className="accounting-val">
-                    {selectedOrder.storeType === 'ZID'
-                      ? 'كود 413 (مبيعات متجر زد) — Account ID: 4689'
-                      : 'كود 414 (مبيعات متجر ترينديول) — Account ID: 4690'}
-                  </span>
-                </div>
+                    <div className="accounting-item">
+                      <span className="accounting-label">المعاملة الضريبية وهيئة الزكاة:</span>
+                      <span
+                        className="accounting-val"
+                        style={{
+                          color: selectedOrderExport.isExport ? '#0284c7' : '#047857',
+                          fontWeight: 700,
+                        }}
+                      >
+                        {selectedOrderExport.isExport
+                          ? `🌍 تصدير دولي (ضريبة صفرية 0% - كود إعفاء الزكاة: VATEX-SA-EXPORT - المادة 32)`
+                          : 'ضريبة محلية (15% شاملة أو سلع طبية صفرية VATEX-SA-MED)'}
+                      </span>
+                    </div>
 
-                <div className="accounting-item">
-                  <span className="accounting-label">خزينة التسوية (Settlement Treasury):</span>
-                  <span className="accounting-val">
-                    {selectedOrder.treasuryId
-                      ? `خزينة #${selectedOrder.treasuryId} (${selectedOrder.paymentMethod})`
-                      : '⚠️ غير معرّفة (تم إيقاف المعاملة تلقائياً)'}
-                  </span>
-                </div>
+                    <div className="accounting-item">
+                      <span className="accounting-label">حساب الإيراد (Sales Revenue GL):</span>
+                      <span className="accounting-val">
+                        {selectedOrder.storeType === 'ZID'
+                          ? 'كود 413 (مبيعات متجر زد) — Account ID: 4689'
+                          : 'كود 414 (مبيعات متجر ترينديول) — Account ID: 4690'}
+                      </span>
+                    </div>
 
-                <div className="accounting-item">
-                  <span className="accounting-label">حساب إيراد الشحن (Shipping Revenue):</span>
-                  <span className="accounting-val">كود 415 (إيرادات الشحن والتوصيل) — Account ID: 4691</span>
-                </div>
+                    <div className="accounting-item">
+                      <span className="accounting-label">خزينة التسوية (Settlement Treasury):</span>
+                      <span className="accounting-val">
+                        {selectedOrder.treasuryId
+                          ? `خزينة #${selectedOrder.treasuryId} (${selectedOrder.paymentMethod})`
+                          : '⚠️ غير معرّفة (تم إيقاف المعاملة تلقائياً)'}
+                      </span>
+                    </div>
 
-                <div className="accounting-item">
-                  <span className="accounting-label">مستودع الأونلاين (Warehouse):</span>
-                  <span className="accounting-val">مستودع المتجر الالكتروني (Store ID: 3)</span>
-                </div>
+                    <div className="accounting-item">
+                      <span className="accounting-label">حساب إيراد الشحن (Shipping Revenue):</span>
+                      <span className="accounting-val">كود 415 (إيرادات الشحن والتوصيل) — Account ID: 4691</span>
+                    </div>
 
-                <div className="accounting-item">
-                  <span className="accounting-label">بطاقة العميل (Client Card):</span>
-                  <span className="accounting-val">
-                    {selectedOrder.storeType === 'ZID'
-                      ? 'عميل زد المخصص (Client ID: 1249)'
-                      : 'عميل عام (Client ID: 3)'}
-                  </span>
-                </div>
+                    <div className="accounting-item">
+                      <span className="accounting-label">مستودع الأونلاين (Warehouse):</span>
+                      <span className="accounting-val">مستودع المتجر الالكتروني (Store ID: 3)</span>
+                    </div>
 
-                {selectedOrder.daftraInvoiceNumber && (
-                  <div className="accounting-item">
-                    <span className="accounting-label">رقم الفاتورة في دفترة:</span>
-                    <span className="accounting-val" style={{ color: '#047857', fontWeight: 700 }}>
-                      {selectedOrder.daftraInvoiceNumber}
-                    </span>
+                    <div className="accounting-item">
+                      <span className="accounting-label">بطاقة العميل (Client Card):</span>
+                      <span className="accounting-val">
+                        {selectedOrder.storeType === 'ZID'
+                          ? 'عميل زد المخصص (Client ID: 1249)'
+                          : 'عميل عام (Client ID: 3)'}
+                      </span>
+                    </div>
+
+                    {selectedOrder.daftraInvoiceNumber && (
+                      <div className="accounting-item">
+                        <span className="accounting-label">رقم الفاتورة في دفترة:</span>
+                        <span className="accounting-val" style={{ color: '#047857', fontWeight: 700 }}>
+                          {selectedOrder.daftraInvoiceNumber}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
 
-              {/* Customer and Shipping Details */}
-              <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '14px' }}>
-                <h4 style={{ margin: '0 0 8px', fontSize: '13px', color: 'var(--color-text-secondary)' }}>
-                  بيانات المشتري الحقيقي (المحقونة في خانة ملاحظات الفاتورة):
-                </h4>
-                <p style={{ margin: '0 0 4px', fontSize: '13px' }}>
-                  <strong>الاسم:</strong> {selectedOrder.customerName}
-                </p>
-                <p style={{ margin: '0 0 4px', fontSize: '13px' }}>
-                  <strong>الجوال:</strong> {selectedOrder.customerPhone || '—'}
-                </p>
-                <p style={{ margin: '0', fontSize: '13px' }}>
-                  <strong>العنوان:</strong> {selectedOrder.shippingAddress || '—'}
-                </p>
-              </div>
+                  {/* Customer and Shipping Details */}
+                  <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '14px' }}>
+                    <h4 style={{ margin: '0 0 8px', fontSize: '13px', color: 'var(--color-text-secondary)' }}>
+                      بيانات المشتري الحقيقي (المحقونة في خانة ملاحظات الفاتورة):
+                    </h4>
+                    {selectedOrderExport.isExport && (
+                      <p style={{ margin: '0 0 6px', fontSize: '13px', color: '#0284c7', fontWeight: 600 }}>
+                        <strong>وجهة الشحن الدولي:</strong> {selectedOrderExport.countryName || 'خارج المملكة'} 🌍 (تصدير)
+                      </p>
+                    )}
+                    <p style={{ margin: '0 0 4px', fontSize: '13px' }}>
+                      <strong>الاسم:</strong> {selectedOrder.customerName}
+                    </p>
+                    <p style={{ margin: '0 0 4px', fontSize: '13px' }}>
+                      <strong>الجوال:</strong> {selectedOrder.customerPhone || '—'}
+                    </p>
+                    <p style={{ margin: '0', fontSize: '13px' }}>
+                      <strong>العنوان:</strong> {selectedOrder.shippingAddress || '—'}
+                    </p>
+                  </div>
 
-              {/* Financial Breakdown */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
-                <div style={{ background: '#f1f5f9', padding: '10px', borderRadius: '6px', textAlign: 'center' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>المجموع الفرعي</span>
-                  <p style={{ margin: '4px 0 0', fontWeight: 700 }}>{selectedOrder.subtotal || 0} ر.س</p>
+                  {/* Financial Breakdown */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+                    <div style={{ background: '#f1f5f9', padding: '10px', borderRadius: '6px', textAlign: 'center' }}>
+                      <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>المجموع الفرعي</span>
+                      <p style={{ margin: '4px 0 0', fontWeight: 700 }}>{selectedOrder.subtotal || 0} ر.س</p>
+                    </div>
+                    <div style={{ background: '#f1f5f9', padding: '10px', borderRadius: '6px', textAlign: 'center' }}>
+                      <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>رسوم الشحن</span>
+                      <p style={{ margin: '4px 0 0', fontWeight: 700 }}>{selectedOrder.shippingFee || 0} ر.س</p>
+                    </div>
+                    <div style={{ background: '#f1f5f9', padding: '10px', borderRadius: '6px', textAlign: 'center' }}>
+                      <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>
+                        {selectedOrderExport.isExport ? 'الضريبة (صفرية تصدير)' : 'الضريبة'}
+                      </span>
+                      <p
+                        style={{
+                          margin: '4px 0 0',
+                          fontWeight: 700,
+                          color: selectedOrderExport.isExport ? '#0284c7' : 'inherit',
+                        }}
+                      >
+                        {selectedOrderExport.isExport ? '0.00 ر.س' : `${selectedOrder.taxAmount || 0} ر.س`}
+                      </p>
+                    </div>
+                    <div style={{ background: '#ecfdf5', padding: '10px', borderRadius: '6px', textAlign: 'center', border: '1px solid #a7f3d0' }}>
+                      <span style={{ fontSize: '11px', color: '#047857' }}>الإجمالي الكلي</span>
+                      <p style={{ margin: '4px 0 0', fontWeight: 700, color: '#047857' }}>{selectedOrder.totalAmount || 0} ر.س</p>
+                    </div>
+                  </div>
                 </div>
-                <div style={{ background: '#f1f5f9', padding: '10px', borderRadius: '6px', textAlign: 'center' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>رسوم الشحن</span>
-                  <p style={{ margin: '4px 0 0', fontWeight: 700 }}>{selectedOrder.shippingFee || 0} ر.س</p>
-                </div>
-                <div style={{ background: '#f1f5f9', padding: '10px', borderRadius: '6px', textAlign: 'center' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>الضريبة</span>
-                  <p style={{ margin: '4px 0 0', fontWeight: 700 }}>{selectedOrder.taxAmount || 0} ر.س</p>
-                </div>
-                <div style={{ background: '#ecfdf5', padding: '10px', borderRadius: '6px', textAlign: 'center', border: '1px solid #a7f3d0' }}>
-                  <span style={{ fontSize: '11px', color: '#047857' }}>الإجمالي الكلي</span>
-                  <p style={{ margin: '4px 0 0', fontWeight: 700, color: '#047857' }}>{selectedOrder.totalAmount || 0} ر.س</p>
-                </div>
-              </div>
-            </div>
+              );
+            })()}
           </div>
         </div>
       )}
