@@ -25,6 +25,11 @@ export const ordersService = {
     return response.data;
   },
 
+  async retryCancellation(id) {
+    const response = await api.post(`/orders/${id}/retry-cancellation`);
+    return response.data;
+  },
+
   /**
    * محاكاة طلب تجريبي للاختبار
    */

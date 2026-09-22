@@ -17,6 +17,7 @@ import {
   Building2,
   CreditCard,
   X,
+  XCircle,
   Globe,
 } from 'lucide-react';
 
@@ -101,6 +102,8 @@ export const Orders = () => {
     unmappedPaymentOrders: 0,
     unmappedProductOrders: 0,
     stalledOrders: 0,
+    cancelledOrders: 0,
+    cancellationReviewOrders: 0,
   });
   const [meta, setMeta] = useState({ total: 0, page: 1, limit: 20, totalPages: 1 });
   const [loading, setLoading] = useState(true);
@@ -165,6 +168,26 @@ export const Orders = () => {
     }
   };
 
+  const handleRetryCancellation = async (id) => {
+    try {
+      setRetryingId(id);
+      const res = await ordersService.retryCancellation(id);
+      setFeedbackMessage({
+        type: 'success',
+        text: res.statusMessage || 'تمت إعادة محاولة إنشاء مرتجع دفترة بنجاح.',
+      });
+      await loadData();
+    } catch (err) {
+      setFeedbackMessage({
+        type: 'error',
+        text: err.response?.data?.message || 'فشلت إعادة محاولة الإلغاء.',
+      });
+    } finally {
+      setRetryingId(null);
+      setTimeout(() => setFeedbackMessage(null), 5000);
+    }
+  };
+
   // Filter orders by search
   const filteredOrders = orders.filter((order) => {
     if (!searchQuery) return true;
@@ -212,6 +235,36 @@ export const Orders = () => {
           <span className="order-status-badge status-processing">
             <Clock size={13} />
             جاري المعالجة...
+          </span>
+        );
+      case 'CANCEL_PENDING':
+        return (
+          <span className="order-status-badge status-cancel-pending">
+            <Clock size={13} />
+            جارٍ إنشاء مرتجع دفترة
+          </span>
+        );
+      case 'CANCELLED':
+        return (
+          <span className="order-status-badge status-cancelled">
+            <XCircle size={13} />
+            {order.daftraRefundReceiptNumber
+              ? `ملغي — مرتجع #${order.daftraRefundReceiptNumber}`
+              : 'ملغي قبل الفوترة'}
+          </span>
+        );
+      case 'CANCEL_FAILED':
+        return (
+          <span className="order-status-badge status-failed">
+            <AlertCircle size={13} />
+            فشل إنشاء مرتجع دفترة
+          </span>
+        );
+      case 'CANCEL_REVIEW_REQUIRED':
+        return (
+          <span className="order-status-badge status-cancel-review">
+            <AlertTriangle size={13} />
+            إلغاء يحتاج مراجعة
           </span>
         );
       default:
@@ -282,6 +335,16 @@ export const Orders = () => {
         </div>
 
         <div className="order-stat-card">
+          <div className="stat-icon-wrapper stat-icon-slate">
+            <XCircle size={24} />
+          </div>
+          <div className="stat-details">
+            <span className="stat-value">{stats.cancelledOrders || 0}</span>
+            <span className="stat-label">طلبات ملغاة</span>
+          </div>
+        </div>
+
+        <div className="order-stat-card">
           <div className="stat-icon-wrapper stat-icon-green">
             <CheckCircle2 size={24} />
           </div>
@@ -334,6 +397,12 @@ export const Orders = () => {
             onClick={() => setStatusFilter('STALLED')}
           >
             طلبات متعثرة / تحتاج تدخل ({stats.stalledOrders || ((stats.failedOrders || 0) + (stats.unmappedPaymentOrders || 0) + (stats.unmappedProductOrders || 0))})
+          </button>
+          <button
+            className={`filter-tab-btn ${statusFilter === 'CANCELLED' ? 'filter-tab-active' : ''}`}
+            onClick={() => setStatusFilter('CANCELLED')}
+          >
+            الطلبات الملغاة ({stats.cancelledOrders || 0})
           </button>
         </div>
 
@@ -464,7 +533,7 @@ export const Orders = () => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         {renderStatusBadge(order)}
                         {order.statusMessage && order.status !== 'DRAFT_CREATED' && (
-                          <span style={{ fontSize: '11px', color: '#b91c1c', maxWidth: '240px' }}>
+                          <span style={{ fontSize: '11px', color: order.status === 'CANCELLED' ? '#047857' : '#b91c1c', maxWidth: '240px' }}>
                             {order.statusMessage}
                           </span>
                         )}
@@ -498,7 +567,7 @@ export const Orders = () => {
                           التفاصيل
                         </button>
 
-                        {order.status !== 'DRAFT_CREATED' && (
+                        {!['DRAFT_CREATED', 'CANCEL_PENDING', 'CANCELLED', 'CANCEL_FAILED', 'CANCEL_REVIEW_REQUIRED'].includes(order.status) && (
                           <button
                             className="btn-retry-order"
                             onClick={() => handleRetryOrder(order.id)}
@@ -510,6 +579,17 @@ export const Orders = () => {
                               className={retryingId === order.id ? 'animate-spin' : ''}
                             />
                             إعادة المحاولة
+                          </button>
+                        )}
+                        {order.status === 'CANCEL_FAILED' && (
+                          <button
+                            className="btn-retry-order"
+                            onClick={() => handleRetryCancellation(order.id)}
+                            disabled={retryingId === order.id}
+                            title="إعادة محاولة إنشاء مرتجع دفترة"
+                          >
+                            <RefreshCw size={12} className={retryingId === order.id ? 'animate-spin' : ''} />
+                            إعادة المرتجع
                           </button>
                         )}
                       </div>
@@ -585,7 +665,9 @@ export const Orders = () => {
                     <div className="accounting-item">
                       <span className="accounting-label">نوع المعاملة في دفترة:</span>
                       <span className="accounting-val" style={{ color: '#047857' }}>
-                        فاتورة معتمدة ومباشرة (is_draft: 0) — تخصم المخزون وتسجل القيود وسند السداد فوراً
+                        {selectedOrder.status === 'CANCELLED'
+                          ? 'فاتورة معتمدة مع مرتجع مبيعات كامل مرتبط بها'
+                          : 'فاتورة معتمدة ومباشرة (is_draft: 0) — تخصم المخزون وتسجل القيود وسند السداد فوراً'}
                       </span>
                     </div>
 
@@ -646,6 +728,15 @@ export const Orders = () => {
                         <span className="accounting-label">رقم الفاتورة في دفترة:</span>
                         <span className="accounting-val" style={{ color: '#047857', fontWeight: 700 }}>
                           {selectedOrder.daftraInvoiceNumber}
+                        </span>
+                      </div>
+                    )}
+
+                    {selectedOrder.daftraRefundReceiptNumber && (
+                      <div className="accounting-item">
+                        <span className="accounting-label">رقم مرتجع المبيعات في دفترة:</span>
+                        <span className="accounting-val" style={{ color: '#b45309', fontWeight: 700 }}>
+                          {selectedOrder.daftraRefundReceiptNumber}
                         </span>
                       </div>
                     )}
