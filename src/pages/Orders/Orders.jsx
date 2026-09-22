@@ -21,6 +21,13 @@ import {
   Globe,
 } from 'lucide-react';
 
+const CANCEL_PENDING_STALE_MS = 5 * 60 * 1000;
+
+const isStaleCancellation = (order, currentTime = Date.now()) =>
+  order?.status === 'CANCEL_PENDING' &&
+  Boolean(order.updatedAt) &&
+  currentTime - new Date(order.updatedAt).getTime() >= CANCEL_PENDING_STALE_MS;
+
 // Helper to determine if an order is destined for international export
 const getOrderExportInfo = (order) => {
   if (!order) return { isExport: false, countryName: '' };
@@ -112,6 +119,12 @@ export const Orders = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [feedbackMessage, setFeedbackMessage] = useState(null);
+  const [currentTime, setCurrentTime] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(Date.now()), 30 * 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Load orders and stats on mount, and when statusFilter changes (reset to page 1)
   useEffect(() => {
@@ -237,13 +250,15 @@ export const Orders = () => {
             جاري المعالجة...
           </span>
         );
-      case 'CANCEL_PENDING':
+      case 'CANCEL_PENDING': {
+        const cancellationIsStale = isStaleCancellation(order, currentTime);
         return (
-          <span className="order-status-badge status-cancel-pending">
-            <Clock size={13} />
-            جارٍ إنشاء مرتجع دفترة
+          <span className={`order-status-badge ${cancellationIsStale ? 'status-failed' : 'status-cancel-pending'}`}>
+            {cancellationIsStale ? <AlertCircle size={13} /> : <Clock size={13} />}
+            {cancellationIsStale ? 'مرتجع متوقف — يحتاج إعادة محاولة' : 'جارٍ إنشاء مرتجع دفترة'}
           </span>
         );
+      }
       case 'CANCELLED':
         return (
           <span className="order-status-badge status-cancelled">
@@ -581,7 +596,7 @@ export const Orders = () => {
                             إعادة المحاولة
                           </button>
                         )}
-                        {order.status === 'CANCEL_FAILED' && (
+                        {(order.status === 'CANCEL_FAILED' || isStaleCancellation(order, currentTime)) && (
                           <button
                             className="btn-retry-order"
                             onClick={() => handleRetryCancellation(order.id)}
