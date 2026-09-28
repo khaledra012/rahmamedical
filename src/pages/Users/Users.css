@@ -1,0 +1,12 @@
+.users-page { display: flex; flex-direction: column; gap: 18px; }
+.users-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.users-header h2 { margin: 0 0 6px; }
+.users-header p, .users-muted { margin: 0; color: var(--color-text-muted); font-size: 12px; }
+.users-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.users-table-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px; overflow: hidden; }
+.users-form { display: flex; flex-direction: column; gap: 14px; }
+.users-field { display: flex; flex-direction: column; gap: 7px; font-size: 13px; font-weight: 600; }
+.users-field select { padding: 10px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-surface); }
+.users-checkbox { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.users-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+@media (max-width: 720px) { .users-header { align-items: stretch; flex-direction: column; } }

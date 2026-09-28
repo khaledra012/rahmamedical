@@ -39,8 +39,8 @@ export const AuthProvider = ({ children }) => {
   /**
    * Login user with credentials
    */
-  const login = async (email, password) => {
-    const data = await authService.login(email, password);
+  const login = async (identifier, password) => {
+    const data = await authService.login(identifier, password);
     setUser(data.user);
     setToken(data.token);
     localStorage.setItem('daftra_token', data.token);
@@ -48,14 +48,25 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
+  const refreshUser = async () => {
+    const currentUser = await authService.getMe();
+    setUser(currentUser);
+    localStorage.setItem('daftra_user', JSON.stringify(currentUser));
+    return currentUser;
+  };
+
   /**
    * Logout user and clear session
    */
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('daftra_token');
-    localStorage.removeItem('daftra_user');
+  const logout = async () => {
+    try {
+      if (token) await authService.logout();
+    } finally {
+      setUser(null);
+      setToken(null);
+      localStorage.removeItem('daftra_token');
+      localStorage.removeItem('daftra_user');
+    }
   };
 
   const value = {
@@ -65,6 +76,7 @@ export const AuthProvider = ({ children }) => {
     isLoading,
     login,
     logout,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

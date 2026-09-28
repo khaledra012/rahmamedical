@@ -6,11 +6,15 @@ import {
   Package,
   ShoppingCart,
   RotateCcw,
+  ShieldCheck,
+  Users,
   X,
 } from 'lucide-react';
 import { RahmaLogo } from '../../components/RahmaLogo/RahmaLogo';
+import { useAuth } from '../../context/AuthContext';
 
 export const Sidebar = ({ isOpen, onClose }) => {
+  const { user } = useAuth();
   const navItems = [
     {
       name: 'لوحة المؤشرات',
@@ -32,6 +36,16 @@ export const Sidebar = ({ isOpen, onClose }) => {
       path: '/sync-logs',
       icon: <RotateCcw size={20} />,
     },
+    {
+      name: 'نشاط المستخدمين',
+      path: '/audit-logs',
+      icon: <ShieldCheck size={20} />,
+    },
+    ...(user?.role === 'admin' ? [{
+      name: 'المستخدمون والصلاحيات',
+      path: '/users',
+      icon: <Users size={20} />,
+    }] : []),
   ];
 
   return (

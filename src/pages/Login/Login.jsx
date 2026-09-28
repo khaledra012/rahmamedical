@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button, Input, Alert, RahmaLogo } from '../../components';
-import { Mail, Lock, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { User, Lock, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import './Login.css';
 
 export const Login = () => {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -22,7 +22,7 @@ export const Login = () => {
     e.preventDefault();
     setError(null);
 
-    if (!email.trim() || !password) {
+    if (!identifier.trim() || !password) {
       setError('يرجى ملء جميع الحقول المطلوبة');
       return;
     }
@@ -30,7 +30,7 @@ export const Login = () => {
     setIsLoading(true);
 
     try {
-      await login(email, password);
+      await login(identifier, password);
       navigate(from, { replace: true });
     } catch (err) {
       setError(err?.message || 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
@@ -60,14 +60,14 @@ export const Login = () => {
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="login-form">
           <Input
-            label="البريد الإلكتروني"
-            type="email"
-            placeholder="name@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            icon={<Mail size={18} />}
+            label="البريد الإلكتروني أو اسم المستخدم"
+            type="text"
+            placeholder="name@example.com أو username"
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
+            icon={<User size={18} />}
             required
-            autoComplete="email"
+            autoComplete="username"
           />
 
           <div className="password-input-group">

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './Orders.css';
 import { ordersService } from '../../services/ordersService';
 import { Button } from '../../components';
+import { useAuth } from '../../context/AuthContext';
 import {
   ShoppingCart,
   CheckCircle2,
@@ -100,6 +101,9 @@ const getOrderExportInfo = (order) => {
 };
 
 export const Orders = () => {
+  const { user } = useAuth();
+  const canRetryOrders = user?.role === 'admin' || user?.role === 'operator';
+  const canRetryCancellations = user?.role === 'admin';
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState({
     totalOrders: 0,
@@ -582,7 +586,7 @@ export const Orders = () => {
                           التفاصيل
                         </button>
 
-                        {!['DRAFT_CREATED', 'CANCEL_PENDING', 'CANCELLED', 'CANCEL_FAILED', 'CANCEL_REVIEW_REQUIRED'].includes(order.status) && (
+                        {canRetryOrders && !['DRAFT_CREATED', 'CANCEL_PENDING', 'CANCELLED', 'CANCEL_FAILED', 'CANCEL_REVIEW_REQUIRED'].includes(order.status) && (
                           <button
                             className="btn-retry-order"
                             onClick={() => handleRetryOrder(order.id)}
@@ -596,7 +600,7 @@ export const Orders = () => {
                             إعادة المحاولة
                           </button>
                         )}
-                        {(order.status === 'CANCEL_FAILED' || isStaleCancellation(order, currentTime)) && (
+                        {canRetryCancellations && (order.status === 'CANCEL_FAILED' || isStaleCancellation(order, currentTime)) && (
                           <button
                             className="btn-retry-order"
                             onClick={() => handleRetryCancellation(order.id)}

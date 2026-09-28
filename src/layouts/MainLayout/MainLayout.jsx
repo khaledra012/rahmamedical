@@ -18,6 +18,10 @@ export const MainLayout = () => {
         return 'إدارة الطلبات والفوترة والمحاسبة';
       case '/sync-logs':
         return 'سجل عمليات المزامنة وإعادة المحاولة';
+      case '/audit-logs':
+        return 'سجل نشاط المستخدمين';
+      case '/users':
+        return 'إدارة المستخدمين والصلاحيات';
       case '/analytics':
         return 'تقارير المبيعات والإحصائيات';
       default:

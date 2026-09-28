@@ -14,8 +14,11 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import './Products.css';
+import { useAuth } from '../../context/AuthContext';
 
 export const Products = () => {
+  const { user } = useAuth();
+  const canManage = user?.role === 'admin' || user?.role === 'operator';
   const [products, setProducts] = useState([]);
   const [meta, setMeta] = useState({ total: 0, page: 1, limit: 15, totalPages: 1 });
   const [selectedStatus, setSelectedStatus] = useState('ALL');
@@ -267,6 +270,7 @@ export const Products = () => {
               variant="outline"
               size="sm"
               icon={<Edit3 size={13} />}
+              disabled={!canManage}
               onClick={() => handleOpenEnrichModal(row)}
               title="إثراء وتخصيص البيانات"
             >
@@ -280,7 +284,7 @@ export const Products = () => {
                 size="sm"
                 icon={<Send size={13} />}
                 isLoading={isCurrentLoading}
-                disabled={isBlockedInDaftra}
+                disabled={!canManage || isBlockedInDaftra}
                 onClick={(e) => toggleDropdown(row.id, e)}
                 className="btn-publish-dropdown"
                 title={isBlockedInDaftra ? 'لا يمكن نشر منتج غير نشط أو موقوف في دفترة' : 'نشر المنتج'}
@@ -339,7 +343,7 @@ export const Products = () => {
             </div>
 
             {/* 3. Retry button if any failed */}
-            {(row.publishStatus === 'FAILED' || row.trendyolStatus === 'FAILED') && (
+            {canManage && (row.publishStatus === 'FAILED' || row.trendyolStatus === 'FAILED') && (
               <Button
                 variant="danger"
                 size="sm"
@@ -374,8 +378,8 @@ export const Products = () => {
             icon={<RefreshCw size={16} />}
             onClick={handleSyncDaftra}
             isLoading={isSyncing}
-            disabled={isSyncing}
-            title="سحب ومزامنة أحدث المنتجات من دفترة فورياً"
+            disabled={isSyncing || !canManage}
+            title={canManage ? 'سحب ومزامنة أحدث المنتجات من دفترة فورياً' : 'حساب المشاهدة لا يملك صلاحية المزامنة'}
           >
             مزامنة مع دفترة 🔄
           </Button>

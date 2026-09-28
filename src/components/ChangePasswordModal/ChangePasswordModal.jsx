@@ -4,7 +4,7 @@ import { authService } from '../../services/authService';
 import { KeyRound, Lock, Eye, EyeOff, X, Check, RefreshCw } from 'lucide-react';
 import { Button } from '../Button/Button';
 
-export const ChangePasswordModal = ({ isOpen, onClose }) => {
+export const ChangePasswordModal = ({ isOpen, onClose, isRequired = false, onChanged }) => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -42,13 +42,14 @@ export const ChangePasswordModal = ({ isOpen, onClose }) => {
     try {
       setLoading(true);
       await authService.changePassword(currentPassword, newPassword);
+      if (onChanged) await onChanged();
       setSuccess(true);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
       setTimeout(() => {
         setSuccess(false);
-        onClose();
+        if (onClose) onClose();
       }, 1800);
     } catch (err) {
       console.error('Password change error:', err);
@@ -60,6 +61,7 @@ export const ChangePasswordModal = ({ isOpen, onClose }) => {
   };
 
   const handleClose = () => {
+    if (isRequired) return;
     setError(null);
     setSuccess(false);
     setCurrentPassword('');
@@ -75,17 +77,16 @@ export const ChangePasswordModal = ({ isOpen, onClose }) => {
         <div className="change-password-header">
           <div className="change-password-title">
             <KeyRound size={18} />
-            تغيير كلمة المرور
+            {isRequired ? 'تغيير كلمة المرور المؤقتة' : 'تغيير كلمة المرور'}
           </div>
-          <button className="change-password-close" onClick={handleClose} aria-label="إغلاق">
-            <X size={18} />
-          </button>
+          {!isRequired && <button className="change-password-close" onClick={handleClose} aria-label="إغلاق"><X size={18} /></button>}
         </div>
 
         {/* Form Body */}
         <form onSubmit={handleSubmit}>
           <div className="change-password-body">
             {error && <div className="change-alert change-alert-error">{error}</div>}
+            {isRequired && !success && <div className="change-alert">يجب تغيير كلمة المرور المؤقتة قبل تنفيذ أي عملية.</div>}
             {success && (
               <div className="change-alert change-alert-success" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Check size={16} />
@@ -171,7 +172,7 @@ export const ChangePasswordModal = ({ isOpen, onClose }) => {
 
           {/* Footer Buttons */}
           <div className="change-password-footer">
-            <Button
+            {!isRequired && <Button
               type="button"
               variant="outline"
               size="sm"
@@ -179,7 +180,7 @@ export const ChangePasswordModal = ({ isOpen, onClose }) => {
               disabled={loading}
             >
               إلغاء
-            </Button>
+            </Button>}
             <Button
               type="submit"
               variant="primary"

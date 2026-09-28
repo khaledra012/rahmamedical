@@ -6,8 +6,8 @@ export const authService = {
    * @param {string} email
    * @param {string} password
    */
-  async login(email, password) {
-    const response = await api.post('/auth/login', { email, password });
+  async login(identifier, password) {
+    const response = await api.post('/auth/login', { identifier, email: identifier, password });
     return response.data; // returns { user, token, expiresIn }
   },
 
@@ -29,6 +29,11 @@ export const authService = {
       currentPassword,
       newPassword,
     });
+    return response.data;
+  },
+
+  async logout() {
+    const response = await api.post('/auth/logout');
     return response.data;
   },
 };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './SyncLogs.css';
 import { logsService } from '../../services/logsService';
+import { useAuth } from '../../context/AuthContext';
 import {
   RotateCcw,
   CheckCircle2,
@@ -18,6 +19,8 @@ import {
 } from 'lucide-react';
 
 export const SyncLogs = () => {
+  const { user } = useAuth();
+  const canRetry = user?.role === 'admin' || user?.role === 'operator';
   const [logs, setLogs] = useState([]);
   const [stats, setStats] = useState({
     totalLogs: 0,
@@ -511,7 +514,7 @@ export const SyncLogs = () => {
                           فحص
                         </button>
 
-                        {log.status === 'FAILED' && (
+                        {canRetry && log.status === 'FAILED' && (
                           <button
                             className="btn-retry-log"
                             onClick={() => handleRetry(log.id)}
@@ -699,7 +702,7 @@ export const SyncLogs = () => {
               </div>
 
               {/* Modal Footer with Retry */}
-              {selectedLog.status === 'FAILED' && (
+              {canRetry && selectedLog.status === 'FAILED' && (
                 <div
                   style={{
                     display: 'flex',

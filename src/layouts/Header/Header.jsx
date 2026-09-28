@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Header.css';
 import { Menu, User, LogOut, KeyRound } from 'lucide-react';
@@ -6,12 +6,16 @@ import { useAuth } from '../../context/AuthContext';
 import { ChangePasswordModal } from '../../components/ChangePasswordModal/ChangePasswordModal';
 
 export const Header = ({ onToggleSidebar, title = 'لوحة التحكم المركزية' }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
-  const handleLogout = () => {
-    logout();
+  useEffect(() => {
+    if (user?.mustChangePassword) setIsPasswordModalOpen(true);
+  }, [user?.mustChangePassword]);
+
+  const handleLogout = async () => {
+    await logout();
     navigate('/login', { replace: true });
   };
 
@@ -43,7 +47,7 @@ export const Header = ({ onToggleSidebar, title = 'لوحة التحكم الم�
           <div className="user-info">
             <span className="user-name">{user?.name || 'مدير النظام'}</span>
             <span className="user-role">
-              {user?.role === 'admin' ? 'مدير عام' : 'مشرف'}
+              {user?.role === 'admin' ? 'مدير النظام' : user?.role === 'operator' ? 'موظف تشغيل' : 'مشاهدة فقط'}
             </span>
           </div>
           <button
@@ -69,6 +73,8 @@ export const Header = ({ onToggleSidebar, title = 'لوحة التحكم الم�
       <ChangePasswordModal
         isOpen={isPasswordModalOpen}
         onClose={() => setIsPasswordModalOpen(false)}
+        isRequired={Boolean(user?.mustChangePassword)}
+        onChanged={refreshUser}
       />
     </header>
   );
