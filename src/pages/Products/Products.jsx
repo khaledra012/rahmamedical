@@ -173,6 +173,17 @@ export const Products = () => {
     }
   };
 
+  const getDaftraStatusBadge = (status) => {
+    const normalizedStatus = Number(status ?? 0);
+    if (normalizedStatus === 1) {
+      return <Badge variant="danger" dot size="sm">دفترة: غير نشط</Badge>;
+    }
+    if (normalizedStatus === 2) {
+      return <Badge variant="danger" dot size="sm">دفترة: موقوف</Badge>;
+    }
+    return <Badge variant="success" dot size="sm">دفترة: نشط</Badge>;
+  };
+
   const filterTabs = [
     { label: 'الكل', value: 'ALL' },
     { label: 'بانتظار النشر', value: 'PENDING_REVIEW' },
@@ -235,6 +246,7 @@ export const Products = () => {
       key: 'publishStatus',
       render: (val, row) => (
         <div className="product-status-multi-col">
+          {getDaftraStatusBadge(row.daftraStatus)}
           {getStatusBadge(row.publishStatus, 'زد')}
           {getStatusBadge(row.trendyolStatus, 'ترينديول')}
         </div>
@@ -246,6 +258,7 @@ export const Products = () => {
       render: (val, row) => {
         const isCurrentLoading = actionLoadingId && actionLoadingId.includes(`-${row.id}`);
         const isDropdownOpen = activeDropdownId === row.id;
+        const isBlockedInDaftra = [1, 2].includes(Number(row.daftraStatus));
 
         return (
           <div className="product-actions-cell" ref={isDropdownOpen ? dropdownRef : null}>
@@ -267,8 +280,10 @@ export const Products = () => {
                 size="sm"
                 icon={<Send size={13} />}
                 isLoading={isCurrentLoading}
+                disabled={isBlockedInDaftra}
                 onClick={(e) => toggleDropdown(row.id, e)}
                 className="btn-publish-dropdown"
+                title={isBlockedInDaftra ? 'لا يمكن نشر منتج غير نشط أو موقوف في دفترة' : 'نشر المنتج'}
               >
                 <span>نشر</span>
                 <ChevronDown size={13} />
