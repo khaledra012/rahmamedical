@@ -20,6 +20,8 @@ import {
   X,
   XCircle,
   Globe,
+  Truck,
+  CircleDollarSign,
 } from 'lucide-react';
 
 const CANCEL_PENDING_STALE_MS = 5 * 60 * 1000;
@@ -28,6 +30,41 @@ const isStaleCancellation = (order, currentTime = Date.now()) =>
   order?.status === 'CANCEL_PENDING' &&
   Boolean(order.updatedAt) &&
   currentTime - new Date(order.updatedAt).getTime() >= CANCEL_PENDING_STALE_MS;
+
+const isCodOrder = (order) =>
+  ['cod', 'cash_on_delivery', 'zid_cod'].includes(String(order?.paymentMethod || '').toLowerCase());
+
+const isStaleCodSettlement = (order, currentTime = Date.now()) =>
+  order?.codSettlementStatus === 'PROCESSING' &&
+  Boolean(order.codSettlementStartedAt) &&
+  currentTime - new Date(order.codSettlementStartedAt).getTime() >= CANCEL_PENDING_STALE_MS;
+
+const getShippingStage = (order) => {
+  const raw = String(order?.shippingStatus || order?.zidOrderStatus || '').trim();
+  const normalized = raw.toLowerCase().replace(/[\s_-]+/g, '');
+
+  if (!raw) return { label: 'بانتظار تحديث الشحن', tone: 'waiting' };
+  if (normalized.includes('cancel') || raw.includes('ملغ')) return { label: 'ملغي', tone: 'cancelled' };
+  if (normalized.includes('delivered') || raw.includes('تم التوصيل') || raw.includes('تم التسليم')) {
+    return { label: 'تم التوصيل', tone: 'delivered' };
+  }
+  if (raw.includes('بانتظار العميل') || raw.includes('انتظار العميل')) {
+    return { label: 'بانتظار الاستلام', tone: 'delivery' };
+  }
+  if (normalized.includes('outfordelivery') || raw.includes('خارج للتوصيل')) {
+    return { label: 'خارج للتوصيل', tone: 'delivery' };
+  }
+  if (normalized.includes('indelivery') || raw.includes('جاري التوصيل') || raw.includes('في التوصيل')) {
+    return { label: 'في التوصيل', tone: 'delivery' };
+  }
+  if (raw.includes('تم الإسناد') || raw.includes('تم الاسناد')) {
+    return { label: 'أُسند للشركة', tone: 'ready' };
+  }
+  if (normalized.includes('ready') || raw.includes('جاهز')) return { label: 'جاهز للشحن', tone: 'ready' };
+  if (normalized.includes('preparing') || raw.includes('تجهيز')) return { label: 'قيد التجهيز', tone: 'preparing' };
+  if (normalized === 'new' || raw.includes('جديد')) return { label: 'جديد', tone: 'waiting' };
+  return { label: raw.length > 24 ? `${raw.slice(0, 24)}…` : raw, tone: 'waiting' };
+};
 
 // Helper to determine if an order is destined for international export
 const getOrderExportInfo = (order) => {
@@ -104,6 +141,7 @@ export const Orders = () => {
   const { user } = useAuth();
   const canRetryOrders = user?.role === 'admin' || user?.role === 'operator';
   const canRetryCancellations = user?.role === 'admin';
+  const canRetryCodSettlements = user?.role === 'admin';
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState({
     totalOrders: 0,
@@ -115,6 +153,7 @@ export const Orders = () => {
     stalledOrders: 0,
     cancelledOrders: 0,
     cancellationReviewOrders: 0,
+    codSettlementIssueOrders: 0,
   });
   const [meta, setMeta] = useState({ total: 0, page: 1, limit: 20, totalPages: 1 });
   const [loading, setLoading] = useState(true);
@@ -198,6 +237,27 @@ export const Orders = () => {
       setFeedbackMessage({
         type: 'error',
         text: err.response?.data?.message || 'فشلت إعادة محاولة الإلغاء.',
+      });
+    } finally {
+      setRetryingId(null);
+      setTimeout(() => setFeedbackMessage(null), 5000);
+    }
+  };
+
+  const handleRetryCodSettlement = async (id) => {
+    const retryKey = `cod-${id}`;
+    try {
+      setRetryingId(retryKey);
+      const res = await ordersService.retryCodSettlement(id);
+      setFeedbackMessage({
+        type: res.codSettlementStatus === 'SETTLED' ? 'success' : 'error',
+        text: res.codSettlementMessage || 'تمت إعادة فحص تسوية الدفع عند الاستلام.',
+      });
+      await loadData();
+    } catch (err) {
+      setFeedbackMessage({
+        type: 'error',
+        text: err.response?.data?.message || 'فشلت إعادة محاولة تسوية الدفع عند الاستلام.',
       });
     } finally {
       setRetryingId(null);
@@ -487,6 +547,18 @@ export const Orders = () => {
                           ) : (
                             <span className="store-badge store-badge-trendyol">ترينديول</span>
                           )}
+                          {order.storeType === 'ZID' && (() => {
+                            const stage = getShippingStage(order);
+                            return (
+                              <span
+                                className={`shipping-stage-badge shipping-stage-${stage.tone}`}
+                                title={`${order.shippingMethodName || 'شركة الشحن غير محددة'}${order.shippingStatusUpdatedAt ? ` — آخر تحديث ${new Date(order.shippingStatusUpdatedAt).toLocaleString('ar-SA')}` : ''}`}
+                              >
+                                <Truck size={11} />
+                                {stage.label}
+                              </span>
+                            );
+                          })()}
                           {(() => {
                             const { isExport, countryName } = getOrderExportInfo(order);
                             if (isExport) {
@@ -522,7 +594,19 @@ export const Orders = () => {
                         <span style={{ fontWeight: 600, textTransform: 'uppercase' }}>
                           {order.paymentMethod}
                         </span>
-                        {order.treasuryId ? (
+                        {isCodOrder(order) ? (
+                          order.codSettlementStatus === 'SETTLED' && order.codTreasuryId ? (
+                            <span className="payment-treasury-tag cod-settled-tag">
+                              <CircleDollarSign size={11} />
+                              خزينة شركة الشحن #{order.codTreasuryId}
+                            </span>
+                          ) : (
+                            <span className="payment-treasury-tag cod-waiting-tag">
+                              <Clock size={11} />
+                              بانتظار التوصيل وتسوية COD
+                            </span>
+                          )
+                        ) : order.treasuryId ? (
                           <span className="payment-treasury-tag">
                             <CreditCard size={11} />
                             خزينة دفترة #{order.treasuryId}
@@ -554,6 +638,23 @@ export const Orders = () => {
                         {order.statusMessage && order.status !== 'DRAFT_CREATED' && (
                           <span style={{ fontSize: '11px', color: order.status === 'CANCELLED' ? '#047857' : '#b91c1c', maxWidth: '240px' }}>
                             {order.statusMessage}
+                          </span>
+                        )}
+                        {isCodOrder(order) && order.codSettlementStatus && (
+                          <span
+                            className={`cod-status-badge cod-status-${String(order.codSettlementStatus).toLowerCase().replace('_', '-')}`}
+                            title={order.codSettlementMessage || ''}
+                          >
+                            <CircleDollarSign size={11} />
+                            {order.codSettlementStatus === 'SETTLED'
+                              ? `COD مسدد في خزينة #${order.codTreasuryId}`
+                              : order.codSettlementStatus === 'PROCESSING'
+                              ? 'جاري تسوية COD'
+                              : order.codSettlementStatus === 'FAILED'
+                              ? 'فشلت تسوية COD'
+                              : order.codSettlementStatus === 'REVIEW_REQUIRED'
+                              ? 'COD يحتاج مراجعة'
+                              : 'COD بانتظار التوصيل'}
                           </span>
                         )}
                       </div>
@@ -609,6 +710,20 @@ export const Orders = () => {
                           >
                             <RefreshCw size={12} className={retryingId === order.id ? 'animate-spin' : ''} />
                             إعادة المرتجع
+                          </button>
+                        )}
+                        {canRetryCodSettlements && isCodOrder(order) && (
+                          ['FAILED', 'REVIEW_REQUIRED'].includes(order.codSettlementStatus) ||
+                          isStaleCodSettlement(order, currentTime)
+                        ) && (
+                          <button
+                            className="btn-retry-order"
+                            onClick={() => handleRetryCodSettlement(order.id)}
+                            disabled={retryingId === `cod-${order.id}`}
+                            title="إعادة فحص حالة التوصيل وتسجيل سداد COD"
+                          >
+                            <RefreshCw size={12} className={retryingId === `cod-${order.id}` ? 'animate-spin' : ''} />
+                            إعادة تسوية COD
                           </button>
                         )}
                       </div>
@@ -686,6 +801,8 @@ export const Orders = () => {
                       <span className="accounting-val" style={{ color: '#047857' }}>
                         {selectedOrder.status === 'CANCELLED'
                           ? 'فاتورة معتمدة مع مرتجع مبيعات كامل مرتبط بها'
+                          : isCodOrder(selectedOrder)
+                          ? 'فاتورة معتمدة ومباشرة — تظل غير مسددة حتى تأكيد التوصيل من زد'
                           : 'فاتورة معتمدة ومباشرة (is_draft: 0) — تخصم المخزون وتسجل القيود وسند السداد فوراً'}
                       </span>
                     </div>
@@ -717,7 +834,11 @@ export const Orders = () => {
                     <div className="accounting-item">
                       <span className="accounting-label">خزينة التسوية (Settlement Treasury):</span>
                       <span className="accounting-val">
-                        {selectedOrder.treasuryId
+                        {isCodOrder(selectedOrder)
+                          ? selectedOrder.codSettlementStatus === 'SETTLED'
+                            ? `خزينة شركة الشحن #${selectedOrder.codTreasuryId} — ${selectedOrder.shippingMethodName || ''}`
+                            : `بانتظار التوصيل — ${selectedOrder.shippingMethodName || 'شركة الشحن غير محددة'}`
+                          : selectedOrder.treasuryId
                           ? `خزينة #${selectedOrder.treasuryId} (${selectedOrder.paymentMethod})`
                           : '⚠️ غير معرّفة (تم إيقاف المعاملة تلقائياً)'}
                       </span>
@@ -737,7 +858,7 @@ export const Orders = () => {
                       <span className="accounting-label">بطاقة العميل (Client Card):</span>
                       <span className="accounting-val">
                         {selectedOrder.storeType === 'ZID'
-                          ? 'عميل زد المخصص (Client ID: 1249)'
+                          ? 'حساب عملاء زد B2C الموحّد (Client ID: 3964)'
                           : 'عميل عام (Client ID: 3)'}
                       </span>
                     </div>
@@ -758,6 +879,25 @@ export const Orders = () => {
                           {selectedOrder.daftraRefundReceiptNumber}
                         </span>
                       </div>
+                    )}
+
+                    {selectedOrder.storeType === 'ZID' && (
+                      <>
+                        <div className="accounting-item">
+                          <span className="accounting-label">حالة الشحن:</span>
+                          <span className="accounting-val">
+                            {getShippingStage(selectedOrder).label} — {selectedOrder.shippingMethodName || 'شركة غير محددة'}
+                          </span>
+                        </div>
+                        {isCodOrder(selectedOrder) && (
+                          <div className="accounting-item">
+                            <span className="accounting-label">حالة تسوية COD:</span>
+                            <span className="accounting-val">
+                              {selectedOrder.codSettlementMessage || 'بانتظار التوصيل'}
+                            </span>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
 

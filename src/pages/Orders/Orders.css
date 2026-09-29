@@ -261,6 +261,24 @@
   font-weight: 700;
 }
 
+.shipping-stage-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.shipping-stage-waiting { background: #f1f5f9; color: #475569; }
+.shipping-stage-preparing { background: #fef3c7; color: #92400e; }
+.shipping-stage-ready { background: #e0f2fe; color: #0369a1; }
+.shipping-stage-delivery { background: #ede9fe; color: #6d28d9; }
+.shipping-stage-delivered { background: #dcfce7; color: #166534; }
+.shipping-stage-cancelled { background: #fee2e2; color: #991b1b; }
+
 /* Order Status Badges */
 .order-status-badge {
   display: inline-flex;
@@ -332,6 +350,28 @@
   border-radius: 4px;
   margin-top: 4px;
 }
+
+.cod-settled-tag { background: #dcfce7; color: #166534; }
+.cod-waiting-tag { background: #fff7ed; color: #9a3412; }
+
+.cod-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  padding: 3px 7px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #fff7ed;
+  color: #9a3412;
+  border: 1px solid #fed7aa;
+}
+
+.cod-status-settled { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+.cod-status-processing { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+.cod-status-failed,
+.cod-status-review-required { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
 
 /* Actions in Table */
 .order-action-btns {

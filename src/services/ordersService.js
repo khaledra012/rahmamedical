@@ -30,6 +30,11 @@ export const ordersService = {
     return response.data;
   },
 
+  async retryCodSettlement(id) {
+    const response = await api.post(`/orders/${id}/retry-cod-settlement`);
+    return response.data;
+  },
+
   /**
    * محاكاة طلب تجريبي للاختبار
    */
