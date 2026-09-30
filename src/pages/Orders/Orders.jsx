@@ -42,7 +42,13 @@ const isStaleCodSettlement = (order, currentTime = Date.now()) =>
 const getShippingStage = (order) => {
   const isOrderCancelled =
     order?.status?.startsWith('CANCEL') ||
-    ['cancelled', 'canceled'].includes(String(order?.zidOrderStatus || '').toLowerCase());
+    ['cancelled', 'canceled'].includes(String(order?.zidOrderStatus || '').toLowerCase()) ||
+    ['cancelled', 'canceled'].includes(String(order?.status || '').toLowerCase());
+
+  // إذا كان الطلب ملغياً، تظهر خانة الشحن دائماً "ملغي"
+  if (isOrderCancelled) {
+    return { label: 'ملغي', tone: 'cancelled' };
+  }
 
   let raw = String(order?.shippingStatus || '').trim();
   const normalizedRaw = raw.toLowerCase().replace(/[\s_-]+/g, '');
