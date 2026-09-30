@@ -40,7 +40,20 @@ const isStaleCodSettlement = (order, currentTime = Date.now()) =>
   currentTime - new Date(order.codSettlementStartedAt).getTime() >= CANCEL_PENDING_STALE_MS;
 
 const getShippingStage = (order) => {
-  const raw = String(order?.shippingStatus || order?.zidOrderStatus || '').trim();
+  const isOrderCancelled =
+    order?.status?.startsWith('CANCEL') ||
+    ['cancelled', 'canceled'].includes(String(order?.zidOrderStatus || '').toLowerCase());
+
+  let raw = String(order?.shippingStatus || '').trim();
+  const normalizedRaw = raw.toLowerCase().replace(/[\s_-]+/g, '');
+
+  // If the order itself is active, do not let a cancelled courier waybill mask the active state
+  if (!isOrderCancelled && (normalizedRaw.includes('cancel') || raw.includes('ملغ'))) {
+    raw = String(order?.zidOrderStatus || '').trim();
+  } else if (!raw) {
+    raw = String(order?.zidOrderStatus || '').trim();
+  }
+
   const normalized = raw.toLowerCase().replace(/[\s_-]+/g, '');
 
   if (!raw) return { label: 'بانتظار تحديث الشحن', tone: 'waiting' };
