@@ -56,7 +56,11 @@ const getShippingStage = (order) => {
 
   const normalized = raw.toLowerCase().replace(/[\s_-]+/g, '');
 
-  if (!raw) return { label: 'بانتظار تحديث الشحن', tone: 'waiting' };
+  if (!raw || ['na', 'n/a', 'غيرمتاح'].includes(normalized)) {
+    const zidStatus = String(order?.zidOrderStatus || '').toLowerCase().trim();
+    if (!zidStatus || ['new', 'جديد'].includes(zidStatus)) return { label: 'جديد', tone: 'waiting' };
+    return { label: 'بانتظار تحديث الشحن', tone: 'waiting' };
+  }
   if (normalized.includes('cancel') || raw.includes('ملغ')) return { label: 'ملغي', tone: 'cancelled' };
   if (normalized.includes('delivered') || raw.includes('تم التوصيل') || raw.includes('تم التسليم')) {
     return { label: 'تم التوصيل', tone: 'delivered' };
