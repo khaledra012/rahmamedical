@@ -8,6 +8,7 @@ import { SyncLogs } from './pages/SyncLogs/SyncLogs';
 import { Login } from './pages/Login/Login';
 import { Users } from './pages/Users/Users';
 import { AuditLogs } from './pages/AuditLogs/AuditLogs';
+import { Documentation } from './pages/Documentation/Documentation';
 import { ProtectedRoute } from './components/ProtectedRoute/ProtectedRoute';
 import { useAuth } from './context/AuthContext';
 
@@ -36,6 +37,7 @@ export const App = () => {
         <Route path="orders" element={<Orders />} />
         <Route path="sync-logs" element={<SyncLogs />} />
         <Route path="audit-logs" element={<AuditLogs />} />
+        <Route path="documentation" element={<Documentation />} />
         <Route path="users" element={<AdminRoute><Users /></AdminRoute>} />
       </Route>
 

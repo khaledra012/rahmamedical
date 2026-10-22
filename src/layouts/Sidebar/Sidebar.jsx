@@ -8,6 +8,7 @@ import {
   RotateCcw,
   ShieldCheck,
   Users,
+  BookOpenText,
   X,
 } from 'lucide-react';
 import { RahmaLogo } from '../../components/RahmaLogo/RahmaLogo';
@@ -40,6 +41,11 @@ export const Sidebar = ({ isOpen, onClose }) => {
       name: 'نشاط المستخدمين',
       path: '/audit-logs',
       icon: <ShieldCheck size={20} />,
+    },
+    {
+      name: 'دليل الاستخدام',
+      path: '/documentation',
+      icon: <BookOpenText size={20} />,
     },
     ...(user?.role === 'admin' ? [{
       name: 'المستخدمون والصلاحيات',

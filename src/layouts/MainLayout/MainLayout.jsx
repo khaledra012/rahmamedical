@@ -22,6 +22,8 @@ export const MainLayout = () => {
         return 'سجل نشاط المستخدمين';
       case '/users':
         return 'إدارة المستخدمين والصلاحيات';
+      case '/documentation':
+        return 'دليل استخدام النظام';
       case '/analytics':
         return 'تقارير المبيعات والإحصائيات';
       default:

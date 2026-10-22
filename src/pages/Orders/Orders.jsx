@@ -395,7 +395,7 @@ export const Orders = () => {
         return (
           <span className="order-status-badge status-cancel-review">
             <AlertTriangle size={13} />
-            إلغاء يحتاج مراجعة
+            تعذر بناء المرتجع — يحتاج مراجعة
           </span>
         );
       default:
